@@ -408,28 +408,22 @@ def generate_event_report(
     all_events = set()
 
     if internal_data is not None:
-
         all_events.update(
-            internal_data[
-                "Event Name"
-            ].unique()
+            internal_data["Event Name"].unique()
         )
 
     if external_data is not None:
-
         all_events.update(
-            external_data[
-                "Event Name"
-            ].unique()
+            external_data["Event Name"].unique()
         )
 
     rows = []
 
     for event in sorted(all_events):
 
-        # -------------------------------------------------
+        # =================================================
         # INTERNAL
-        # -------------------------------------------------
+        # =================================================
 
         if internal_data is not None:
 
@@ -438,16 +432,12 @@ def generate_event_report(
             ]
 
             internal_total = (
-                internal_event[
-                    "Participants"
-                ].sum()
+                internal_event["Participants"].sum()
             )
 
             internal_paid = (
                 internal_event.loc[
-                    internal_event[
-                        "Payment Status"
-                    ] == "paid",
+                    internal_event["Payment Status"] == "paid",
                     "Participants"
                 ].sum()
             )
@@ -468,9 +458,10 @@ def generate_event_report(
             internal_paid = 0
             display_name = None
 
-        # -------------------------------------------------
+
+        # =================================================
         # EXTERNAL
-        # -------------------------------------------------
+        # =================================================
 
         if external_data is not None:
 
@@ -479,16 +470,12 @@ def generate_event_report(
             ]
 
             external_total = (
-                external_event[
-                    "Participants"
-                ].sum()
+                external_event["Participants"].sum()
             )
 
             external_paid = (
                 external_event.loc[
-                    external_event[
-                        "Payment Status"
-                    ] == "paid",
+                    external_event["Payment Status"] == "paid",
                     "Participants"
                 ].sum()
             )
@@ -511,9 +498,10 @@ def generate_event_report(
             external_total = 0
             external_paid = 0
 
-        # -------------------------------------------------
-        # EVENT PAID / FREE
-        # -------------------------------------------------
+
+        # =================================================
+        # EVENT TYPE
+        # =================================================
 
         internal_amount = (
             internal_event["Amount"].sum()
@@ -527,28 +515,30 @@ def generate_event_report(
             else 0
         )
 
-        total_amount = (
+        total_amount_inclusive_gst = (
             internal_amount
             + external_amount
         )
 
         event_type = (
             "Free"
-            if total_amount == 0
+            if total_amount_inclusive_gst == 0
             else "Paid"
         )
 
-        # -------------------------------------------------
+
+        # =================================================
         # CATEGORY
-        # -------------------------------------------------
+        # =================================================
 
         category = get_event_category(
             display_name
         )
 
-        # -------------------------------------------------
-        # TOTALS
-        # -------------------------------------------------
+
+        # =================================================
+        # TOTAL PAID / TOTAL REGS
+        # =================================================
 
         total_paid = (
             internal_paid
@@ -559,6 +549,103 @@ def generate_event_report(
             internal_total
             + external_total
         )
+
+
+        # =================================================
+        # EXCLUSIVE GST CALCULATION
+        #
+        # Uploaded amount is GST-inclusive.
+        #
+        # For team events:
+        # amount / number of participants
+        #
+        # Then remove 18% GST.
+        # =================================================
+
+        paid_amount = 0
+
+        paid_participants = 0
+
+
+        if not internal_event.empty:
+
+            internal_paid_rows = internal_event[
+                internal_event["Payment Status"] == "paid"
+            ]
+
+            for _, row in internal_paid_rows.iterrows():
+
+                participants = float(
+                    row["Participants"]
+                )
+
+                amount = float(
+                    row["Amount"]
+                )
+
+                if participants > 0:
+
+                    paid_amount += amount
+
+                    paid_participants += participants
+
+
+        if not external_event.empty:
+
+            external_paid_rows = external_event[
+                external_event["Payment Status"] == "paid"
+            ]
+
+            for _, row in external_paid_rows.iterrows():
+
+                participants = float(
+                    row["Participants"]
+                )
+
+                amount = float(
+                    row["Amount"]
+                )
+
+                if participants > 0:
+
+                    paid_amount += amount
+
+                    paid_participants += participants
+
+
+        # =================================================
+        # PER-PERSON COST EXCLUDING GST
+        # =================================================
+
+        if paid_participants > 0:
+
+            amount_excl_gst = (
+                paid_amount
+                / paid_participants
+                / 1.18
+            )
+
+        else:
+
+            amount_excl_gst = 0
+
+
+        # =================================================
+        # REVENUE GENERATED
+        #
+        # Total paid participants ×
+        # exclusive-GST per-person cost
+        # =================================================
+
+        revenue_generated = (
+            total_paid
+            * amount_excl_gst
+        )
+
+
+        # =================================================
+        # ADD ROW
+        # =================================================
 
         rows.append({
 
@@ -587,11 +674,17 @@ def generate_event_report(
                 int(total_paid),
 
             "Total Regs":
-                int(total_regs)
+                int(total_regs),
+
+            "Amount (Excl. GST)":
+                round(amount_excl_gst, 2),
+
+            "Revenue Generated":
+                round(revenue_generated, 2)
+
         })
 
     return pd.DataFrame(rows)
-
 
 # =========================================================
 # COPY SUMMARY TEXT
@@ -1003,18 +1096,20 @@ def download():
     # =====================================================
 
     download_event_report = latest_report[
-        [
-            "Event Name",
-            "Category",
-            "Type of Event",
-            "Internal Paid",
-            "Internal Regs",
-            "External Paid",
-            "External Regs",
-            "Total Paid",
-            "Total Regs"
-        ]
-    ].copy()
+    [
+        "Event Name",
+        "Category",
+        "Type of Event",
+        "Internal Paid",
+        "Internal Regs",
+        "External Paid",
+        "External Regs",
+        "Total Paid",
+        "Total Regs",
+        "Amount (Excl. GST)",
+        "Revenue Generated"
+    ]
+].copy()
 
     # =====================================================
     # CREATE EXCEL
