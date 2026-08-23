@@ -17,7 +17,52 @@ body {
     color: #111827;
 }
 
+/* =====================================================
+   REGISTRATION RANGE HIGHLIGHTING
+   ===================================================== */
 
+.regs-red {
+
+    background: #fecaca !important;
+
+    color: #991b1b;
+
+    font-weight: 700;
+
+}
+
+
+.regs-yellow {
+
+    background: #fef08a !important;
+
+    color: #854d0e;
+
+    font-weight: 700;
+
+}
+
+
+.regs-orange {
+
+    background: #fed7aa !important;
+
+    color: #9a3412;
+
+    font-weight: 700;
+
+}
+
+
+.regs-green {
+
+    background: #bbf7d0 !important;
+
+    color: #166534;
+
+    font-weight: 700;
+
+}
 .container {
 
     max-width: 1250px;
