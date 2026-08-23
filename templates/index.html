@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Registration Analytics</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
+
+    <div class="title">
+        Registration Analytics
+    </div>
+
+    <div class="subtitle">
+        Internal + External Event Registration Report
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- EVENT CATEGORY MANAGEMENT -->
+    <!-- ================================================= -->
+
+    <details class="category-section">
+
+        <summary>
+            ⚙️ Manage Event Categories
+        </summary>
+
+        <p class="help-text">
+            Enter one event per line.
+            Matching is case-insensitive.
+            Anything not present in Premium or Pro
+            automatically becomes a normal Event.
+        </p>
+
+        <div class="category-grid">
+
+            <div>
+
+                <label>
+                    Premium Events
+                </label>
+
+                <textarea
+                    id="premiumEvents"
+                    rows="15"
+                >{{ premium_events | join('\n') }}</textarea>
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    Pro Events
+                </label>
+
+                <textarea
+                    id="proEvents"
+                    rows="15"
+                >{{ pro_events | join('\n') }}</textarea>
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="primary-button small-button"
+            onclick="saveCategories()"
+        >
+            Save Event Lists
+        </button>
+
+        <div
+            id="categoryMessage"
+            class="message"
+        ></div>
+
+    </details>
+
+
+    <!-- ================================================= -->
+    <!-- UPLOAD -->
+    <!-- ================================================= -->
+
+    <div class="section-title">
+        Upload Registration Files
+    </div>
+
+
+    <div class="upload-grid">
+
+
+        <!-- INTERNAL -->
+
+        <div class="upload-card">
+
+            <h3>
+                Internal Registrations
+            </h3>
+
+            <input
+                type="file"
+                id="internalFile"
+                accept=".xlsx,.xls,.csv"
+            >
+
+        </div>
+
+
+        <!-- EXTERNAL -->
+
+        <div class="upload-card">
+
+            <h3>
+                External Registrations
+            </h3>
+
+            <input
+                type="file"
+                id="externalFile"
+                accept=".xlsx,.xls,.csv"
+            >
+
+        </div>
+
+
+    </div>
+
+
+    <button
+        class="primary-button"
+        onclick="generateReport()"
+    >
+        Generate Report
+    </button>
+
+
+    <div
+        id="message"
+        class="message"
+    ></div>
+
+
+    <!-- ================================================= -->
+    <!-- INTERNAL -->
+    <!-- ================================================= -->
+
+    <div
+        id="dashboard"
+        style="display:none;"
+    >
+
+
+        <div class="section-title">
+            Internal Registrations
+        </div>
+
+
+        <div class="metrics-grid">
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Total Registrations
+                </div>
+
+                <div
+                    id="internalTotal"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Paid Registrations
+                </div>
+
+                <div
+                    id="internalPaid"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Free Registrations
+                </div>
+
+                <div
+                    id="internalFree"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Revenue Generated
+                </div>
+
+                <div
+                    id="internalRevenue"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- EXTERNAL -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+            External Registrations
+        </div>
+
+
+        <div class="metrics-grid">
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Total Registrations
+                </div>
+
+                <div
+                    id="externalTotal"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Paid Registrations
+                </div>
+
+                <div
+                    id="externalPaid"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Free Registrations
+                </div>
+
+                <div
+                    id="externalFree"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Revenue Generated
+                </div>
+
+                <div
+                    id="externalRevenue"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- OVERALL -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+            Overall
+        </div>
+
+
+        <div class="metrics-grid">
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Total Registrations
+                </div>
+
+                <div
+                    id="overallTotal"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Paid Registrations
+                </div>
+
+                <div
+                    id="overallPaid"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Free Registrations
+                </div>
+
+                <div
+                    id="overallFree"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-label">
+                    Revenue Generated
+                </div>
+
+                <div
+                    id="overallRevenue"
+                    class="metric-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- COPY SUMMARY -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+            Copy Summary
+        </div>
+
+
+        <div class="copy-container">
+
+            <textarea
+                id="summaryText"
+                readonly
+            ></textarea>
+
+
+            <button
+                class="primary-button"
+                onclick="copySummary()"
+            >
+                📋 Copy Summary Text
+            </button>
+
+
+            <div
+                id="copyMessage"
+                class="message"
+            ></div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- EVENT REPORT -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+            Event-wise Report
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table id="eventTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Event Name
+                        </th>
+
+                        <th>
+                            Category
+                        </th>
+
+                        <th>
+                            Type of Event
+                        </th>
+
+                        <th>
+                            Internal Paid
+                        </th>
+
+                        <th>
+                            Internal Regs
+                        </th>
+
+                        <th>
+                            External Paid
+                        </th>
+
+                        <th>
+                            External Regs
+                        </th>
+
+                        <th>
+                            Total Paid
+                        </th>
+
+                        <th>
+                            Total Regs
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="eventTableBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- SEARCH -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+            Search Event
+        </div>
+
+
+        <div class="search-row">
+
+            <input
+                type="text"
+                id="searchEvent"
+                placeholder="Enter event name..."
+            >
+
+            <button
+                class="primary-button search-button"
+                onclick="searchEvent()"
+            >
+                Search
+            </button>
+
+        </div>
+
+
+        <div
+            id="searchResults"
+        ></div>
+
+
+        <!-- ================================================= -->
+        <!-- DOWNLOAD -->
+        <!-- ================================================= -->
+
+        <div class="section-title">
+            Download Report
+        </div>
+
+
+        <a
+            href="/download"
+            class="download-button"
+        >
+            ⬇️ Download Report
+        </a>
+
+
+    </div>
+
+</div>
+
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+</html>
