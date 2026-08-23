@@ -1,5 +1,3 @@
-
-
 // =========================================================
 // GLOBAL REPORT DATA
 // =========================================================
@@ -17,9 +15,7 @@ function indianFormat(value) {
 
     value = Math.round(value);
 
-    return value.toLocaleString(
-        "en-IN"
-    );
+    return value.toLocaleString("en-IN");
 }
 
 
@@ -28,6 +24,11 @@ function indianFormat(value) {
 // =========================================================
 
 async function generateReport() {
+
+    const loading =
+        document.getElementById(
+            "loadingOverlay"
+        );
 
     const internalFile =
         document.getElementById(
@@ -39,6 +40,10 @@ async function generateReport() {
             "externalFile"
         ).files[0];
 
+
+    // =====================================================
+    // VALIDATE FILES
+    // =====================================================
 
     if (!internalFile) {
 
@@ -61,6 +66,21 @@ async function generateReport() {
         return;
     }
 
+
+    // =====================================================
+    // SHOW LOADING TILE
+    // =====================================================
+
+    if (loading) {
+
+        loading.style.display = "flex";
+
+    }
+
+
+    // =====================================================
+    // PREPARE FILES
+    // =====================================================
 
     const formData =
         new FormData();
@@ -86,6 +106,10 @@ async function generateReport() {
 
     try {
 
+        // =================================================
+        // SEND TO FLASK
+        // =================================================
+
         const response =
             await fetch(
                 "/generate",
@@ -100,6 +124,10 @@ async function generateReport() {
             await response.json();
 
 
+        // =================================================
+        // HANDLE ERROR
+        // =================================================
+
         if (!data.success) {
 
             showMessage(
@@ -111,7 +139,9 @@ async function generateReport() {
         }
 
 
-        // Save event report
+        // =================================================
+        // SAVE EVENT REPORT
+        // =================================================
 
         eventReport =
             data.events || [];
@@ -226,7 +256,7 @@ async function generateReport() {
 
 
         // =================================================
-        // COPY TEXT
+        // COPY SUMMARY
         // =================================================
 
         document.getElementById(
@@ -268,7 +298,67 @@ async function generateReport() {
         );
 
         console.error(error);
+
+    } finally {
+
+        // =================================================
+        // ALWAYS HIDE LOADING TILE
+        // =================================================
+
+        if (loading) {
+
+            loading.style.display = "none";
+
+        }
+
     }
+}
+
+
+// =========================================================
+// GET REGISTRATION HIGHLIGHT CLASS
+// =========================================================
+
+function getRegistrationClass(
+    totalRegs
+) {
+
+    totalRegs =
+        Number(totalRegs) || 0;
+
+
+    // 0 - 30
+    if (totalRegs <= 30) {
+
+        return "regs-red";
+
+    }
+
+
+    // 31 - 50
+    if (
+        totalRegs >= 31 &&
+        totalRegs <= 50
+    ) {
+
+        return "regs-yellow";
+
+    }
+
+
+    // 51 - 90
+    if (
+        totalRegs >= 51 &&
+        totalRegs <= 90
+    ) {
+
+        return "regs-orange";
+
+    }
+
+
+    // 91+
+    return "regs-green";
 }
 
 
@@ -284,6 +374,11 @@ function populateEventTable(events) {
         );
 
 
+    if (!tbody) {
+        return;
+    }
+
+
     tbody.innerHTML = "";
 
 
@@ -293,6 +388,18 @@ function populateEventTable(events) {
             const row =
                 document.createElement(
                     "tr"
+                );
+
+
+            const totalRegs =
+                Number(
+                    event["Total Regs"]
+                ) || 0;
+
+
+            const registrationClass =
+                getRegistrationClass(
+                    totalRegs
                 );
 
 
@@ -346,9 +453,23 @@ function populateEventTable(events) {
                     )}
                 </td>
 
+                <td
+                    class="${registrationClass}"
+                >
+                    ${indianFormat(
+                        totalRegs
+                    )}
+                </td>
+
                 <td>
                     ${indianFormat(
-                        event["Total Regs"]
+                        event["Amount (Excl. GST)"]
+                    )}
+                </td>
+
+                <td>
+                    ${indianFormat(
+                        event["Revenue Generated"]
                     )}
                 </td>
 
@@ -450,6 +571,11 @@ function displaySearchResults(
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = "";
 
 
@@ -464,6 +590,18 @@ function displaySearchResults(
 
             result.className =
                 "search-result";
+
+
+            const totalRegs =
+                Number(
+                    row["Total Regs"]
+                ) || 0;
+
+
+            const registrationClass =
+                getRegistrationClass(
+                    totalRegs
+                );
 
 
             result.innerHTML = `
@@ -588,9 +726,45 @@ function displaySearchResults(
                             Total Registrations
                         </div>
 
+                        <div
+                            class="search-value ${registrationClass}"
+                            style="
+                                padding: 4px 8px;
+                                border-radius: 6px;
+                            "
+                        >
+                            ${indianFormat(
+                                totalRegs
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="search-metric">
+
+                        <div class="search-label">
+                            Amount (Excl. GST)
+                        </div>
+
                         <div class="search-value">
                             ${indianFormat(
-                                row["Total Regs"]
+                                row["Amount (Excl. GST)"]
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="search-metric">
+
+                        <div class="search-label">
+                            Revenue Generated
+                        </div>
+
+                        <div class="search-value">
+                            ${indianFormat(
+                                row["Revenue Generated"]
                             )}
                         </div>
 
@@ -622,6 +796,11 @@ async function copySummary() {
         );
 
 
+    if (!textarea) {
+        return;
+    }
+
+
     try {
 
         await navigator.clipboard.writeText(
@@ -629,25 +808,47 @@ async function copySummary() {
         );
 
 
-        document.getElementById(
-            "copyMessage"
-        ).innerText =
-            "Copied to clipboard!";
+        const message =
+            document.getElementById(
+                "copyMessage"
+            );
+
+
+        if (message) {
+
+            message.innerText =
+                "Copied to clipboard!";
+
+        }
 
 
     } catch (error) {
 
         textarea.select();
 
+        textarea.setSelectionRange(
+            0,
+            99999
+        );
+
+
         document.execCommand(
             "copy"
         );
 
 
-        document.getElementById(
-            "copyMessage"
-        ).innerText =
-            "Copied to clipboard!";
+        const message =
+            document.getElementById(
+                "copyMessage"
+            );
+
+
+        if (message) {
+
+            message.innerText =
+                "Copied to clipboard!";
+
+        }
 
     }
 }
@@ -696,33 +897,48 @@ async function saveCategories() {
             await response.json();
 
 
-        document.getElementById(
-            "categoryMessage"
-        ).innerText =
-            data.message;
+        const message =
+            document.getElementById(
+                "categoryMessage"
+            );
 
 
-        // If a report already exists,
-        // reload the page so the new categories
-        // are reflected.
+        if (message) {
+
+            message.innerText =
+                data.message;
+
+        }
+
 
         if (data.success) {
 
             setTimeout(
                 function() {
+
                     location.reload();
+
                 },
                 700
             );
+
         }
 
 
     } catch (error) {
 
-        document.getElementById(
-            "categoryMessage"
-        ).innerText =
-            "Could not save event lists.";
+        const message =
+            document.getElementById(
+                "categoryMessage"
+            );
+
+
+        if (message) {
+
+            message.innerText =
+                "Could not save event lists.";
+
+        }
 
     }
 }
@@ -741,6 +957,11 @@ function showMessage(
         document.getElementById(
             "message"
         );
+
+
+    if (!element) {
+        return;
+    }
 
 
     element.innerText =
@@ -768,6 +989,11 @@ function showSearchMessage(
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = `
 
         <div class="search-result">
@@ -788,30 +1014,38 @@ function showSearchMessage(
 
 function escapeHtml(value) {
 
-    if (value === null ||
-        value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
 
         return "";
 
     }
 
+
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
