@@ -424,6 +424,12 @@ function populateEventTable(events) {
                 </td>
 
                 <td>
+    ${indianFormat(
+        event["Total Allotted"]
+    )}
+</td>
+
+                <td>
                     ${indianFormat(
                         event["Internal Paid"]
                     )}
@@ -643,6 +649,20 @@ function displaySearchResults(
                         </div>
 
                     </div>
+
+                    <div class="search-metric">
+
+    <div class="search-label">
+        Total Allotted
+    </div>
+
+    <div class="search-value">
+        ${indianFormat(
+            row["Total Allotted"]
+        )}
+    </div>
+
+</div>
 
 
                     <div class="search-metric">
