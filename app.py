@@ -38,7 +38,7 @@ DEFAULT_PREMIUM_EVENTS = [
 
 DEFAULT_PRO_EVENTS = [
     "Capital Hunt 2.0",
-    "Capital Hunt 2.0 - Freshminds"
+    "Capital Hunt 2.0 - Fresh MInds"
 ]
 
 
